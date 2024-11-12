@@ -1,4 +1,4 @@
-name: Multi-arch build stable
+name: ucs-build-test
 run-name: ${{ inputs.tag }} (${{ inputs.release_number }})
 
 on:
