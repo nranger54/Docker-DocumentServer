@@ -1,4 +1,3 @@
-### This workflow setup instance then build and push images ###
 name: ucs-build-test
 run-name: ${{ inputs.tag }} (${{ inputs.release_number }})
 
@@ -20,84 +19,6 @@ env:
   PRODUCT_NAME: "documentserver" 
 
 jobs:
-  build:
-    name: "Release image: DocumentServer${{ matrix.edition }}"
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        images: ["documentserver-stable"]
-        edition: ["", "-ee", "-de"]
-    steps:
-      - name: Checkout code 
-        uses: actions/checkout@v3
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-     
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Build documentserver-release
-        run: |
-          set -eux
-          VERSION=${{ github.event.inputs.tag }}
-          RELEASE_NUMBER=${{ github.event.inputs.release_number }}
-          PRODUCT_EDITION=${{ matrix.edition }}
-          TESTING_IMAGE=${COMPANY_NAME}/4testing-${PRODUCT_NAME}${PRODUCT_EDITION}
-            export PRODUCT_EDITION
-            export PULL_TAG=${VERSION}
-            export TAG=${VERSION%.*}.${RELEASE_NUMBER}
-            export SHORTER_TAG=${VERSION%.*}
-            export SHORTEST_TAG=${VERSION%.*.*}
-            docker buildx bake -f docker-bake.hcl ${{ matrix.images }} --push
-            echo "DONE: Build success >> exit with 0"
-            exit 0
-        shell: bash
-
-  build-nonexample:
-    name: "Release image: DocumentServer${{ matrix.edition }}-nonExample"
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: ${{ false }}
-    strategy:
-      fail-fast: false
-      matrix:
-        images: ["documentserver-nonexample"]
-        edition: ["", "-ee", "-de"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: build image
-        run: |
-          set -eux
-          VERSION=${{ github.event.inputs.tag }}
-          RELEASE_NUMBER=${{ github.event.inputs.release_number }}
-          export PULL_TAG=${VERSION%.*}.${RELEASE_NUMBER}
-          export PRODUCT_EDITION=${{ matrix.edition }}
-          export TAG=${VERSION%.*}.${RELEASE_NUMBER}
-          docker buildx bake -f docker-bake.hcl ${{ matrix.images }} --push
-        shell: bash
-
   build-ucs-ubuntu20:
     name: "Release image: DocumentServer${{ matrix.edition }}-ucs"
     runs-on: ubuntu-latest
